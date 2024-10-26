@@ -1,0 +1,73 @@
+﻿using UnityEngine;
+using UnityEngine.UIElements;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public Transform viewPoint;
+    public float mouseSensitivity = 1f; 
+    private float verticalRotStore;
+    private Vector2 mouseInput;
+
+    public bool invertLook;
+
+    public float moveSpeed = 5f, runSpeed = 8f;
+    private float activeMoveSpeed;
+    private Vector3 moveDir, movement;
+
+    public CharacterController characterController;
+
+    private Camera cam;
+    // Start is called before the first frame update
+    void Start()
+    {
+        UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+        cam = Camera.main;
+    }
+    // Update is called once per frame
+    void Update()
+    {
+        mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")) * mouseSensitivity;
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y + mouseInput.x, transform.rotation.eulerAngles.z); 
+        verticalRotStore += mouseInput.y;
+        verticalRotStore = Mathf.Clamp(verticalRotStore, -60f, 60f);
+        if (invertLook)
+        {
+            viewPoint.rotation = Quaternion.Euler(verticalRotStore, viewPoint.rotation.eulerAngles.y, viewPoint.rotation.eulerAngles.z);
+        }
+        else
+        {
+            viewPoint.rotation = Quaternion.Euler(-verticalRotStore, viewPoint.rotation.eulerAngles.y, viewPoint.rotation.eulerAngles.z);
+        }
+
+        if(Input.GetKey(KeyCode.LeftShift)) 
+        {
+            activeMoveSpeed = runSpeed;
+        }
+        else 
+        {
+            activeMoveSpeed = moveSpeed;
+        }
+
+        float yVel = movement.y;
+
+
+        moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
+
+        movement = ((transform.forward * moveDir.z) + (transform.right * moveDir.x)).normalized * activeMoveSpeed;
+        movement.y = yVel;
+
+        if(characterController.isGrounded) 
+        {
+            yVel = 0f;
+        }
+
+        movement.y += Physics.gravity.y * Time.deltaTime;
+        characterController.Move(movement * Time.deltaTime); 
+    }
+
+    private void LateUpdate()
+    {
+        cam.transform.position = viewPoint.position;
+        cam.transform.rotation = viewPoint.rotation;
+    }
+}
